@@ -1,0 +1,274 @@
+C51 COMPILER V9.54   ADC_TASK                                                              05/13/2016 14:54:22 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE ADC_TASK
+OBJECT MODULE PLACED IN .\Objects\adc_task.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE task\adc\adc_task.c OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Listings
+                    -\adc_task.lst) OBJECT(.\Objects\adc_task.obj)
+
+line level    source
+
+   1          #include "task/adc/adc_task.h"
+   2          
+   3          /* for AD */
+   4          #define AD_EQU_PNUM            4                     //Ã¿µÀ¸ÖË¿²ÉÑù4´ÎÇóÆ½¾ùÖµ
+   5          
+   6          extern  data  Byte        ad_sensor_mask;    //´«¸ÐÆ÷ÑÚÂë
+   7          extern  data  sAD_Sample  ad_sample;         //±£´æµ±Ç°²ÉÑùÖµ
+   8          extern idata  sAD_Sum     ad_samp_equ;       //¾ùºâÈ¥àÐÉùÇóºÍ
+   9          extern xdata  Union16     ad_chn_sample;     //×îÐÂÒ»ÂÖ²ÉÑùÖµ£¨ÒÑ¾ùºâÈ¥ÔëÉù£¬Ã¿Í¨µÀÒ»¸öµã£¬Ñ­»·±£´æ£©
+  10          extern idata  Uint16      ad_samp_pnum;      //²ÉÑùµãÊý(¼ÆËã¾²Ì¬»ù×¼ÖµÊ±×Ü²ÉÑùµãÊý)
+  11          extern idata  sAD_Sum     ad_samp_sum;       //½×¶ÎÇóºÍ
+  12          extern xdata  sAD_BASE    ad_chn_base;       //¸÷Í¨µÀÔËÐÐÊ±¾²Ì¬»ù×¼Öµ/ÉÏÏÂÏÞ·§Öµ£¨µ¥Î»£º²ÉÑùÖµ£©
+  13          extern  data  Byte        ad_chn_over;       //¸÷Í¨µÀÁ¬Ðø²ÉÑùµã(¾ùºâºó)µÄ·§ÖµÅÐ¶¨£º 0 - ·¶Î§ÄÚ£» 1 - ³¬·§Ö
+             -µ
+  14          extern xdata  Byte        ad_still_Dup;      //±¨¾¯·§ÖµÉÏÏÞ
+  15          extern idata  Uint16      ad_alarm_exts;     //ÍâÁ¦±¨¾¯±êÖ¾£¨ÎÞmask£©£º Î»Öµ 0 - ÎÞ£» 1 - ³¬·§Öµ
+  16          
+  17          /* for this task: ÓÃÓÚ»ù×¼Öµ¸ú×Ù */
+  18          static idata  Byte        md_point;          //ÓÃÓÚ»ù×¼Öµ¸ú×ÙµÄ¼ÆÁ¿µãÊý
+  19          
+  20          /* for system */
+  21          extern idata  Byte        system_status;     //ÏµÍ³×´Ì¬
+  22          
+  23          /* variables for alarm output */
+  24          extern data   Uint16      ad_alarm_tick;     //¸÷Í¨µÀ±¨¾¯¼ÆÊ±tick
+  25          extern bdata  bit         ad_alarm_flag;     //ÍâÁ¦±¨¾¯±êÖ¾
+  26          static xdata  Uint16      alarm_led_flag;        //LED±¨¾¯Ö¸Ê¾: 0 - ÎÞ±¨¾¯£¨Ãð£©£»1 - ±¨¾¯£¨ÁÁ£©
+  27          
+  28          void adc_task_init(void)
+  29          {
+  30   1              //Ïà¹Ø±äÁ¿³õÊ¼»¯
+  31   1              ad_sample.valid = 0;                     //¿ÕÏÐ£¬¿ÉÒÔÐ´ÈëÐÂÖµ
+  32   1              ad_samp_pnum    = 0;                     //²ÉÑùµãÊý(¼ÆËã¾²Ì¬»ù×¼ÖµÊ±×Ü²ÉÑùµãÊý)
+  33   1              ad_samp_equ.sum       = 0;                   //¾ùºâÈ¥àÐÉùÇóºÍ
+  34   1              ad_samp_equ.point     = 0;
+  35   1              ad_samp_sum.sum       = 0;                   //½×¶ÎÇóºÍ
+  36   1              ad_samp_sum.point     = 0;
+  37   1              ad_chn_sample.w       = 0;                   //×îÐÂÒ»ÂÖ²ÉÑùÖµ
+  38   1              ad_chn_base.base      = 0;                   //¸÷Í¨µÀ¾²Ì¬»ù×¼Öµ/ÉÏÏÂÏÞ·§Öµ
+  39   1              ad_chn_base.base_down = 0;
+  40   1              ad_chn_base.base_up   = 0;
+  41   1              ad_chn_over           = 0x00;            //¸÷Í¨µÀÁ¬Ðø²ÉÑùµã(¾ùºâºó)µÄ·§ÖµÅÐ¶¨£º¾ùÔÚ·¶Î§ÄÚ
+  42   1              md_point              = 0;               //ÓÃÓÚ»ù×¼Öµ¸ú×ÙµÄ¼ÆÁ¿µãÊý
+  43   1              ad_alarm_tick         = 0x00;
+  44   1      
+  45   1              ad_alarm_exts   = 0;                                     //ÍâÁ¦±¨¾¯±êÖ¾£¨ÎÞmask£©: ÎÞ
+  46   1              alarm_led_flag  = 0;                     //ËùÓÐ±¨¾¯LEDÎªÃð
+  47   1              ad_alarm_flag   = 0;
+  48   1      
+  49   1              //adcÓ²¼þ³õÊ¼»¯
+  50   1              adc_init();
+  51   1      }
+  52          
+  53          void adc_task(void)
+C51 COMPILER V9.54   ADC_TASK                                                              05/13/2016 14:54:22 PAGE 2   
+
+  54          {
+  55   1              Uint16  temp16;         //ÁÙÊ±±äÁ¿
+  56   1              Uint16  val_temp;       //ÐÂËÍÈëµÄ10bit²ÉÑùÖµ,  ºó×÷ÁÙÊ±±äÁ¿
+  57   1              Uint16  val;            //4µã¾ùºâºóµÃµ½µÄÆ½¾ù²ÉÑùÖµ, ×÷ÎªÒ»¸ö¿É½øÐÐ³¬ÏÞÅÐ¶ÏµÄ×îÐ¡µã
+  58   1      
+  59   1              if (ad_sample.valid) {  //ÓÐÐÂ²ÉÑùÊý¾Ýµ½´ï
+  60   2                      // 0. ±£´æµ½ÁÙÊ±±äÁ¿
+  61   2                      val_temp = ad_sample.val;
+  62   2      
+  63   2                      // 1. ±£´æµ½¾ùºâÈ¥àÐÉùÇóºÍÖÐ
+  64   2                      ad_samp_equ.sum += val_temp;
+  65   2                      ad_samp_equ.point++;
+  66   2      
+  67   2                      // 2. µ±Ç°Í¨µÀÊÇ·ñÂú×ãÈ¥àÐÉùµãÊý
+  68   2                      if (ad_samp_equ.point == AD_EQU_PNUM) {
+  69   3                              // ÒÑÂúÈ¥àÐÉùµãÊý£¬¿ÉÇó³ö¾ùºâºóµÄÒ»¸öµã
+  70   3                              // 2.a Çó³ö¶ÔÓ¦Í¨µÀµÄÒ»¸ö²ÉÑùµã
+  71   3                              val = ad_samp_equ.sum >> 2;  //³ýÓÚ4
+  72   3      
+  73   3                              // 2.b ÇåÁãµ±Ç°Í¨µÀµÄÈ¥àÐÉùÇóºÍ½á¹¹
+  74   3                              ad_samp_equ.sum = 0;
+  75   3                              ad_samp_equ.point = 0;
+  76   3      
+  77   3                              // 2.c ±£´æÊµÊ±²ÉÑùÖµ
+  78   3                              ad_chn_sample.w = val;   //±£´æµ½×îÐÂÒ»ÂÖ²ÉÑùÖµÊý×éÖÐ
+  79   3      
+  80   3                              // 2.d ÓÉÏµÍ³×´Ì¬¾ö¶¨Êý¾ÝµÄ´¦Àí
+  81   3                              switch (system_status)
+  82   3                              {
+  83   4                              case SYS_PowerON:   //ÉÏµç
+  84   4                              case SYS_B5S:       //5ÃëÑÓÊ±
+  85   4                                      break;
+  86   4      
+  87   4                              case SYS_SAMP_BASE: //³õÊ¼ÉÏµçÊ±µÄ¾²Ì¬»ù×¼Öµ²ÉÑù
+  88   4                                      //´æÈë½×¶ÎºÍ
+  89   4                                      ad_samp_sum.sum += val;
+  90   4                                      ad_samp_pnum++;
+  91   4                                      if (ad_samp_pnum == 32) {
+  92   5                                              //ÒÑ¾­Âú»ù×¼Öµ²ÉÑùµãÊý£¨Ã¿Í¨µÀ32µã)
+  93   5                                              //1.¼ÆËã¾ùÖµºÍÉÏÏÂÏÞ
+  94   5                                              //»ù×¼
+  95   5                                              ad_chn_base.base = ad_samp_sum.sum >> 5;   //³ýÓÚ32
+  96   5      
+  97   5                                              //ÏÂÏÞ = »ù×¼ * £¨1 / 3£©
+  98   5                                              val_temp = ad_chn_base.base;
+  99   5                                              ad_chn_base.base_down = val_temp / 3;
+ 100   5      
+ 101   5                                              //ÉÏÏÞ
+ 102   5                                              if ((1023 - ad_chn_base.base) > ad_still_Dup) {
+ 103   6                                                      ad_chn_base.base_up = ad_chn_base.base + ad_still_Dup;
+ 104   6                                              } else {
+ 105   6                                                      ad_chn_base.base_up = 1023;
+ 106   6                                              }
+ 107   5      
+ 108   5                                              //¸´Î»½×¶ÎºÍ±äÁ¿£¬×¼±¸ÓÃÓÚ×ÔÊÊÓ¦·§Öµ¸ú×Ù
+ 109   5                                              ad_samp_sum.sum   = 0;
+ 110   5                                              ad_samp_sum.point = 0;
+ 111   5      
+ 112   5                                              //2.e ×´Ì¬-> ÊµÊ±¼ì²â
+ 113   5                                              system_status = SYS_CHECK;
+ 114   5                                      }
+ 115   4      
+C51 COMPILER V9.54   ADC_TASK                                                              05/13/2016 14:54:22 PAGE 3   
+
+ 116   4                                      break;
+ 117   4      
+ 118   4                              case SYS_CHECK: //ÊµÊ±¼ì²â
+ 119   4                                      //2. ÅÐ¶ÏÊÇ·ñÍâÁ¦±¨¾¯
+ 120   4                                      ad_chn_over = ad_chn_over << 1;   //Bit0Ìî0£¬Òò´ËÈ±Ê¡ÔÚÔÊÐí·¶Î§ÄÚ
+ 121   4                                      if (val <= ad_chn_base.base_up) {
+ 122   5                                              //ÔÚÕÅÁ¦ÉÏ/ÏÂÏÞÔÊÐí·¶Î§ÄÚ
+ 123   5                                              //a. Çå±êÖ¾(È±Ê¡)
+ 124   5                                              //b. ¼ÆÈë¸ú×Ù»ù×¼ÖµÇóºÍÖÐ
+ 125   5                                              ad_samp_sum.sum += val;
+ 126   5                                              ad_samp_sum.point++;
+ 127   5      
+ 128   5                                              if (ad_samp_sum.point == 2) {
+ 129   6                                                      //Âú2µã(Ô¼Ðè0.6Ãë)
+ 130   6                                                      //b.0 ¼ÆËãÕâ2µã¾ùÖµ
+ 131   6                                                      val_temp = ad_samp_sum.sum >> 1;   //³ýÓÚ2, µÃµ½Õâ2µãµÄ¾ùÖµ
+ 132   6                                                      //b.1 ¸üÐÂ»ù×¼Öµ
+ 133   6                                                      if (ad_chn_base.base > (val_temp + 1)) {
+ 134   7                                                              //ÖÁÉÙÐ¡2, ÔÚ»ºÂýËÉ³Ú
+ 135   7                                                              //ZZX: Á¢¼´¸ú×Ù, ¸ú×Ù²îÖµµÄ 1/2
+ 136   7                                                              val_temp = (ad_chn_base.base - val_temp) >> 1;
+ 137   7                                                              if (ad_chn_base.base >= val_temp) {
+ 138   8                                                                      ad_chn_base.base -= val_temp;
+ 139   8                                                                      //Í¬²½¸üÐÂÉÏÏÂÏÞ
+ 140   8                                                                      val_temp = ad_chn_base.base;
+ 141   8                                                                      ad_chn_base.base_down = val_temp / 3;
+ 142   8                                                                      if ((1023 - ad_chn_base.base) > ad_still_Dup) {
+ 143   9                                                                              ad_chn_base.base_up = ad_chn_base.base + ad_still_Dup;
+ 144   9                                                                      } else {
+ 145   9                                                                              ad_chn_base.base_up = 1023;
+ 146   9                                                                      }
+ 147   8                                                              }
+ 148   7      
+ 149   7                                                              //Çå»ºÂýÕÅ½ô¸ú×Ù±äÁ¿
+ 150   7                                                              md_point = 0;
+ 151   7                                                      } else if (val_temp > (ad_chn_base.base + 1)) {
+ 152   7                                                              // ÖÁÉÙ´ó2, »ºÂýÕÅ½ô
+ 153   7                                                              md_point++;
+ 154   7                                                              if (md_point >= DEF_ModiBASE_PT) {
+ 155   8                                                                      // ÒÑÂú»ºÂýÕÅ½ôÊ±µÄÁ¬Ðø¼ÆÁ¿µãÊý, ½øÐÐÒ»´Î¸ú×Ù
+ 156   8                                                                      // 1. ¸ú×Ù»ù×¼Öµ
+ 157   8                                                                      if (ad_chn_base.base < 1023) {
+ 158   9                                                                              //¿ÉÒÔµÝÔö1
+ 159   9                                                                              ad_chn_base.base++;
+ 160   9                                                                              // Í¬²½¸üÐÂÉÏÏÂÏÞ
+ 161   9                                                                              val_temp = ad_chn_base.base;
+ 162   9                                                                              ad_chn_base.base_down = val_temp / 3;
+ 163   9                                                                              if (ad_chn_base.base_up < 1023) {
+ 164  10                                                                                      ad_chn_base.base_up++;
+ 165  10                                                                              }
+ 166   9                                                                      }
+ 167   8                                                                      // 2. Çå»ºÂýÕÅ½ô¸ú×Ù±äÁ¿
+ 168   8                                                                      md_point = 0;
+ 169   8                                                              }
+ 170   7                                                      }
+ 171   6      
+ 172   6                                                      //b.2 ¸´Î»½×¶ÎºÍ±äÁ¿ - ÓÃÓÚ4µã4µãÆ½¾ùµÄÇóºÍ½á¹¹
+ 173   6                                                      ad_samp_sum.sum   = 0;
+ 174   6                                                      ad_samp_sum.point = 0;
+ 175   6                                              }
+ 176   5                                      } else {
+ 177   5                                              //ÍâÁ¦±¨¾¯, ÖÃ±êÖ¾
+C51 COMPILER V9.54   ADC_TASK                                                              05/13/2016 14:54:22 PAGE 4   
+
+ 178   5                                              ad_chn_over |= 0x01;
+ 179   5                                      }
+ 180   4      
+ 181   4                                      //2.4 Á¬Ðø4µã³¬·¶Î§£¬´ËÍ¨µÀÓÐÍâÁ¦±¨¾¯
+ 182   4                                      if ((ad_chn_over & 0x0F) == 0x0F) {
+ 183   5                                              //ÖÃÍâÁ¦±¨¾¯±êÖ¾
+ 184   5                                              ad_alarm_exts |= (Uint16)0x01;
+ 185   5      
+ 186   5                                              //±¨¾¯¼ÆÊ±tickÇåÁã
+ 187   5                                              ad_alarm_tick = 0;
+ 188   5      
+ 189   5                                              //Á¢¼´¸üÐÂ»úÖÆ
+ 190   5                                              ad_chn_base.base = val;
+ 191   5                                              val_temp = ad_chn_base.base;
+ 192   5                                              ad_chn_base.base_down = val_temp / 3;
+ 193   5                                              if ((1023 - ad_chn_base.base) > ad_still_Dup) {
+ 194   6                                                      ad_chn_base.base_up = ad_chn_base.base + ad_still_Dup;
+ 195   6                                              } else {
+ 196   6                                                      ad_chn_base.base_up = 1023;
+ 197   6                                              }
+ 198   5      
+ 199   5                                              //¸´Î»½×¶ÎºÍ±äÁ¿ - ÓÃÓÚ4µã4µãÆ½¾ùµÄÇóºÍ½á¹¹
+ 200   5                                              ad_samp_sum.sum = 0;
+ 201   5                                              ad_samp_sum.point = 0;
+ 202   5      
+ 203   5                                              //Çå»ºÂýÕÅ½ô¸ú×Ù±äÁ¿
+ 204   5                                              md_point = 0;   //ÓÃÓÚ»ù×¼Öµ¸ú×ÙµÄ¼ÆÁ¿µãÊý
+ 205   5                                      } else if ((ad_chn_over & 0x0F) == 0x00) {
+ 206   5                                              //ÎÞÍâÁ¦±¨¾¯
+ 207   5                                              //¼ì²é±¨¾¯Ê±¼äÊÇ·ñÒÑµ½
+ 208   5                                              if (ad_alarm_tick > ALARM_TEMPO) {
+ 209   6                                                      //±¨¾¯ÒÑ¾­µ½×î´ó±¨¾¯Ê±¼ä, Í£Ö¹±¨¾¯
+ 210   6                                                      ad_alarm_exts &= ~((Uint16)0x01);
+ 211   6                                              }
+ 212   5                                      }
+ 213   4      
+ 214   4                                      //3 LEDÖ¸Ê¾(ÎÞmask)
+ 215   4                                      temp16 = ad_alarm_exts & 0x0001;
+ 216   4                                      if (alarm_led_flag != temp16) {
+ 217   5                                              //LEDÖ¸Ê¾ÐÅÏ¢ÓÐ±ä»¯
+ 218   5                                              alarm_led_flag = temp16;
+ 219   5                                              P33 = !P33;
+ 220   5                                      }
+ 221   4      
+ 222   4                                      //4 ¸üÐÂ±¨¾¯±êÖ¾
+ 223   4                                      temp16 = (ad_alarm_exts & 0x0001) & ad_sensor_mask;
+ 224   4                                      if (temp16 == 0) {
+ 225   5                                              ad_alarm_flag = 0;   //ÎÞ±¨¾¯
+ 226   5                                      } else {
+ 227   5                                              ad_alarm_flag = 1;   //ÓÐ±¨¾¯
+ 228   5                                      }
+ 229   4      
+ 230   4                                      break;
+ 231   4                              }
+ 232   3      
+ 233   3                              //3.µ±Ç°²ÉÑùÖµ´¦ÀíÍê±Ï£¬ÔÊÐíÐÂµÄ²ÉÑùÖµÊäÈë
+ 234   3                              ad_sample.valid = FALSE;
+ 235   3                      }
+ 236   2              }
+ 237   1      }
+
+
+C51 COMPILER V9.54   ADC_TASK                                                              05/13/2016 14:54:22 PAGE 5   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    791    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =      1    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

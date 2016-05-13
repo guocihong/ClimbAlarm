@@ -1,0 +1,84 @@
+C51 COMPILER V9.54   FLASH_DRV                                                             05/13/2016 14:54:23 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE FLASH_DRV
+OBJECT MODULE PLACED IN .\Objects\flash_drv.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE driver\flash\flash_drv.c OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Lis
+                    -tings\flash_drv.lst) OBJECT(.\Objects\flash_drv.obj)
+
+line level    source
+
+   1          #include "driver/flash/flash_drv.h"
+   2          
+   3          void flash_enable(void)
+   4          {
+   5   1          IAP_CONTR = 0x80;   //允许flash访问，设定等待时间(针对22.1184MHz主频率)
+   6   1      }
+   7          
+   8          void flash_disable(void)
+   9          {
+  10   1          IAP_CMD = FLASH_CMD_STDBY;//待机模式,无ISP操作
+  11   1          IAP_CONTR = 0x00;         //禁止flash访问
+  12   1          IAP_TRIG = 0x00;
+  13   1      }
+  14          
+  15          //耗时21ms
+  16          void flash_erase(Uint16 addr)
+  17          {
+  18   1          IAP_CMD = FLASH_CMD_ERASE;
+  19   1          IAP_ADDRH = HIGH(addr);
+  20   1          IAP_ADDRL = LOW(addr);
+  21   1          IAP_TRIG = 0x5A;
+  22   1          IAP_TRIG = 0xA5;
+  23   1          _nop_();
+  24   1          _nop_();
+  25   1      }
+  26          
+  27          //耗时2个时钟
+  28          Byte flash_read(Uint16 addr)
+  29          {
+  30   1          Byte dat;
+  31   1          IAP_CMD = FLASH_CMD_READ;
+  32   1          IAP_ADDRH = HIGH(addr);
+  33   1          IAP_ADDRL = LOW(addr);
+  34   1          IAP_TRIG = 0x5A;
+  35   1          IAP_TRIG = 0xA5;
+  36   1          _nop_();
+  37   1          _nop_();
+  38   1          dat = IAP_DATA;
+  39   1          
+  40   1          return dat;
+  41   1      }
+  42          
+  43          //耗时55us
+  44          void flash_write(Byte val, Uint16 addr)
+  45          {
+  46   1          IAP_CMD = FLASH_CMD_WRITE;
+  47   1          IAP_ADDRH = HIGH(addr);
+  48   1          IAP_ADDRL = LOW(addr);
+  49   1          IAP_DATA = val;
+  50   1          IAP_TRIG = 0x5A;
+  51   1          IAP_TRIG = 0xA5;
+  52   1          _nop_();
+  53   1          _nop_();
+  54   1      }
+C51 COMPILER V9.54   FLASH_DRV                                                             05/13/2016 14:54:23 PAGE 2   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     74    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

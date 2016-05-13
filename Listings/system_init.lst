@@ -1,0 +1,184 @@
+C51 COMPILER V9.54   SYSTEM_INIT                                                           05/13/2016 14:54:21 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE SYSTEM_INIT
+OBJECT MODULE PLACED IN .\Objects\system_init.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE system_init.c OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Listings\syste
+                    -m_init.lst) OBJECT(.\Objects\system_init.obj)
+
+line level    source
+
+   1          #include "system_init.h"
+   2          
+   3          static void gpio_init(void);
+   4          static void get_defence_info(void);
+   5          static void get_config_info(void);
+   6          
+   7          /* AD sample */
+   8          extern  data  Byte     ad_sensor_mask;              //传感器掩码
+   9          extern xdata  Uint16   ad_still_dn;                 //静态拉力值下限
+  10          extern xdata  Uint16   ad_still_up;                 //静态拉力值上限
+  11          extern xdata  Byte     ad_still_Dup;                //报警阀值上限
+  12          
+  13          /* variables for beep */
+  14          extern xdata  Uint16   beep_during_temp;            //预设的一次蜂鸣持续时间, 单位:tick 
+  15          
+  16          /* 传感器采样偏差 */
+  17          extern xdata  Uint16   sensor_sample_offset;        //传感器采样偏差：没有外力时，传感器采样值不为0，大约4
+             -00左右，需要矫正。瞬间张力 = 采样值 - 采样偏差
+  18                                  
+  19          /* for system */
+  20          extern idata  Byte     gl_comm_addr;                //本模块485通信地址
+  21          extern bdata  bit      system_2or1;                 //双/单防区标志: 0 - 双; 1 - 单             
+  22                                          
+  23          void system_init(void)
+  24          {   
+  25   1              gpio_init();
+  26   1              
+  27   1              get_config_info();
+  28   1      
+  29   1              status_task_init();
+  30   1              adc_task_init();
+  31   1              uart_task_init();
+  32   1              doorkeep_task_init();
+  33   1              alarm_task_init();
+  34   1              
+  35   1              timer0_init();
+  36   1      }
+  37          
+  38          
+  39          static void gpio_init(void)
+  40          {    
+  41   1          Uint32 i;
+  42   1      
+  43   1              //设置P10为AD模式
+  44   1              P1M1 = 0x01;
+  45   1              P1M0 = 0x00;
+  46   1      
+  47   1              //设置P31,P32,P33,P34为准双向口
+  48   1              P3M1 = 0x00;
+  49   1              P3M0 = 0x00;
+  50   1              P32 = 1;//防拆不报警
+  51   1              P33 = 1;//杆自身不报警
+  52   1              P34 = 1;//开关量上电闭合
+  53   1      
+C51 COMPILER V9.54   SYSTEM_INIT                                                           05/13/2016 14:54:21 PAGE 2   
+
+  54   1              //设置P46为高阻输入
+  55   1              P4M1 = 0x40;
+  56   1              P4M0 = 0x00;
+  57   1              P4SW = 0x70;
+  58   1          
+  59   1              //闪一下2个LED -- 全部点亮，用于检测所有LED是否完好
+  60   1              P32 = 0;   //点亮2个LED
+  61   1              P33 = 0;
+  62   1      
+  63   1      
+  64   1          if (P31 == 0) {
+  65   2              ad_sensor_mask = 0;
+  66   2          } else {
+  67   2              ad_sensor_mask = 1;
+  68   2          }
+  69   1          
+  70   1              gl_comm_addr= 55;
+  71   1              system_2or1 = 1;
+  72   1              
+  73   1              i = 150000;
+  74   1              while (i>0)  i--;
+  75   1              
+  76   1              P32 = 1;   //熄灭2个LED
+  77   1              P33 = 1;
+  78   1              
+  79   1              //延时
+  80   1              i = 150000;
+  81   1              while (i>0)  i--;
+  82   1      }
+  83          
+  84          //读取系统预设数据
+  85          static void get_config_info(void)
+  86          {
+  87   1              Byte temp;
+  88   1              
+  89   1              //使能Flash访问
+  90   1              flash_enable();
+  91   1              
+  92   1              //读静态张力值范围
+  93   1              temp = flash_read(EEPROM_SECTOR3);
+  94   1              if (temp == 0x5A) { //有有效设置
+  95   2                      //下限
+  96   2                      temp = flash_read(EEPROM_SECTOR3 + 1);
+  97   2                      ad_still_dn = (Uint16)temp << 8;
+  98   2                      temp = flash_read(EEPROM_SECTOR3 + 2);
+  99   2                      ad_still_dn += temp;
+ 100   2                      //上限
+ 101   2                      temp = flash_read(EEPROM_SECTOR3 + 3);
+ 102   2                      ad_still_up = (Uint16)temp << 8;
+ 103   2                      temp = flash_read(EEPROM_SECTOR3 + 4);
+ 104   2                      ad_still_up += temp;
+ 105   2                      //有效否?
+ 106   2                      if ((ad_still_dn < STD_STILL_DN) ||
+ 107   2                              (ad_still_up > STD_STILL_UP) ||
+ 108   2                              (ad_still_dn >= ad_still_up)) { //无合法数据，取缺省值
+ 109   3                              ad_still_dn = STD_STILL_DN;
+ 110   3                              ad_still_up = STD_STILL_UP;
+ 111   3                      }
+ 112   2              } else {        //无有效设置，取缺省值
+ 113   2                      ad_still_dn = STD_STILL_DN;
+ 114   2                      ad_still_up = STD_STILL_UP;
+ 115   2              }
+C51 COMPILER V9.54   SYSTEM_INIT                                                           05/13/2016 14:54:21 PAGE 3   
+
+ 116   1              
+ 117   1              //读报警阀值参数
+ 118   1              temp = flash_read(EEPROM_SECTOR4);
+ 119   1              if (temp == 0x5A) { //有有效设置
+ 120   2                      ad_still_Dup = flash_read(EEPROM_SECTOR4 + 1);
+ 121   2              
+ 122   2                      //是否有效？
+ 123   2                      if ((ad_still_Dup < STD_ALARM_MIN) || (ad_still_Dup > STD_ALARM_MAX))
+ 124   2                  ad_still_Dup = STD_ALARM_DEF;    //无合法数据，取缺省值
+ 125   2              } else {        //无有效设置，取缺省值
+ 126   2                      ad_still_Dup = STD_ALARM_DEF;
+ 127   2              }
+ 128   1      
+ 129   1              //6. 读声光报警时间设置
+ 130   1              temp = flash_read(EEPROM_SECTOR5);
+ 131   1              if (temp == 0x5A) { //有有效设置
+ 132   2                      temp = flash_read(EEPROM_SECTOR5 + 1);
+ 133   2                      beep_during_temp = (Uint16)(((Uint32)temp * 1000) / SCHEDULER_TICK);
+ 134   2              } else {        //取缺省值
+ 135   2                      beep_during_temp = 0;   //单位： tick
+ 136   2              }
+ 137   1              
+ 138   1              //读传感器采样偏差
+ 139   1              temp = flash_read(EEPROM_SECTOR6);
+ 140   1              if (temp == 0x5A) { //有有效设置       
+ 141   2              temp = flash_read(EEPROM_SECTOR6 + 1);
+ 142   2                      sensor_sample_offset = ((Uint16)temp << 8);
+ 143   2                      temp = flash_read(EEPROM_SECTOR6 + 2);
+ 144   2                      sensor_sample_offset += temp;
+ 145   2              } else {        //无有效设置
+ 146   2                      sensor_sample_offset = 0;
+ 147   2              }
+ 148   1          
+ 149   1              //9. 禁止Flash访问
+ 150   1              flash_disable();
+ 151   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    508    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

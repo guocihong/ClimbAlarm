@@ -1,0 +1,46 @@
+C51 COMPILER V9.54   ADC_DRV                                                               05/13/2016 14:54:23 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE ADC_DRV
+OBJECT MODULE PLACED IN .\Objects\adc_drv.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE driver\adc\adc_drv.c OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Listing
+                    -s\adc_drv.lst) OBJECT(.\Objects\adc_drv.obj)
+
+line level    source
+
+   1          #include "driver/adc/adc_drv.h"
+   2          
+   3          void adc_init(void)
+   4          {
+   5   1          //设置P10做为AD功能
+   6   1          P1ASF |= 0x01;
+   7   1          
+   8   1              //打开AD电源
+   9   1          //设置AD转换速率：540个时钟周期转换一次
+  10   1              //选中通道P17
+  11   1          ADC_CONTR = ADC_POWER_ENABLE | ADC_SPEED_540 | ADC_SAMPLE_CHANNEL;
+  12   1          
+  13   1              //关闭ADC中断
+  14   1              EADC = 0;
+  15   1              
+  16   1          //设置AD转换结果存储格式
+  17   1          AUXR1 &= 0xFB;//10位AD转换结果高8位存储在ADC_RES,低2位存储在ADC_RESL中
+  18   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     12    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

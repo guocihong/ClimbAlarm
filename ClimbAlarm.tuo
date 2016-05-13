@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="Windows-1252" ?>
+<TKStudioOptions Version="3.00" Author="YinHandong[Òüº®¶¬]">
+    <Projects OPTPES="96,96,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,96,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,96,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,">
+        <Project ProjectGUID="{6862B66F-7493-4870-B558-2245D58AD6A7}" Name="ClimbAlarm" ACTCFG="ClimbAlarm">
+            <TARGOPT Name="ClimbAlarm" OPTDF="0">
+                <OPTFFF VAL="&lt;.\driver\uart\uart_drv.c&gt; {0,1,-1,-1,125,125,1127,608,0,4440}" />
+                <OPTFFF VAL="&lt;.\driver\adc\adc_drv.c&gt; {0,1,-1,-1,75,75,1077,558,0,0}" />
+                <OPTFFF VAL="&lt;.\driver\timer\timer_drv.c&gt; {0,1,-1,-1,100,100,1102,583,6,821}" />
+                <OPTFFF VAL="&lt;.\driver\flash\flash_drv.c&gt; {0,1,-1,-1,50,50,1052,533,0,0}" />
+                <OPTFFF VAL="&lt;.\task\status\status_task.c&gt; {0,1,-1,-1,25,25,1027,508,0,566}" />
+                <OPTFFF VAL="&lt;.\task\uart\uart_task.c&gt; {0,1,-1,-1,150,150,1152,633,21,1557}" />
+                <OPTFFF VAL="&lt;.\system_init.c&gt; {0,1,-1,-1,0,0,1002,506,41,1579}" />
+                <OPTFFF VAL="&lt;.\variable.c&gt; {0,1,-1,-1,175,175,1177,658,36,2736}" />
+                <OPTFFF VAL="&lt;.\task\adc\adc_task.c&gt; {0,1,-1,-1,175,175,1177,658,209,7240}" />
+                <OPTFFF VAL="&lt;.\task\alarm\alarm_task.c&gt; {2,3,-1,-1,175,175,1177,658,0,334}" />
+                <OPTFFF VAL="&lt;.\task\doorkeep\doorkeep_task.c&gt; {0,1,-1,-1,175,175,1177,658,0,1699}" />
+                <OPTFFF VAL="&lt;.\config.h&gt; {0,1,-1,-1,175,175,1177,658,51,2814}" />
+            </TARGOPT>
+        </Project>
+    </Projects>
+</TKStudioOptions>

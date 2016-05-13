@@ -1,0 +1,98 @@
+C51 COMPILER V9.54   VARIABLE                                                              05/13/2016 14:54:21 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE VARIABLE
+OBJECT MODULE PLACED IN .\Objects\variable.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE variable.c OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Listings\variable
+                    -.lst) OBJECT(.\Objects\variable.obj)
+
+line level    source
+
+   1          #include "config.h"
+   2          
+   3          /* UART1 */             
+   4          xdata  Byte     msg1_buf[MAX_RecvFrame];     // received message, used for proceding
+   5          bdata  bit      msg1_buf_valid;              // received valid flag
+   6          xdata  Byte     recv1_buf[MAX_RecvFrame];    // receiving buffer
+   7          idata  Byte     recv1_state;                 // receive state
+   8          idata  Byte     recv1_timer;                 // receive time-out, ÓÃÓÚ×Ö½Ú¼ä³¬Ê±ÅÐ¶¨
+   9          idata  Byte     recv1_chksum;                // computed checksum
+  10          idata  Byte     recv1_ctr;                   // reveiving pointer
+  11          
+  12          xdata  Byte     trans1_buf[MAX_TransFrame];  // uart transfer message buffer
+  13          idata  Byte     trans1_ctr;                  // transfer pointer
+  14          idata  Byte     trans1_size;                 // transfer bytes number
+  15          idata  Byte     trans1_chksum;               // computed check-sum of already transfered message
+  16          bdata  bit      trans1_occupy;               // ·¢ËÍÆ÷±»Õ¼ÓÃ±êÖ¾£¬1-±»Õ¼ÓÃ, 0-¿ÕÏÐ
+  17          
+  18          data  Byte      uart1_q_index;               // ÕýÔÚ·¢ËÍÄ³¶ÓÁÐÏîµÄÐòºÅ£ºÈôÎª0xFF, ±íÊ¾Ã»ÓÐÈÎºÎÏî½øÈë·¢ËÍÁ÷
+             -³Ì
+  19          xdata sUART_Q   uart1_q[UART_QUEUE_NUM];         // ´®¿Ú¶ÓÁÐ                                                                                                                                               
+  20          
+  21          /* AD sample */
+  22           data  Byte        ad_sensor_mask;           //´«¸ÐÆ÷ÑÚÂë
+  23           data  sAD_Sample  ad_sample;                //±£´æµ±Ç°²ÉÑùÖµ
+  24          idata  sAD_Sum     ad_samp_equ;              //¾ùºâÈ¥àÐÉùÇóºÍ
+  25          xdata  Union16     ad_chn_sample;            //×îÐÂÒ»ÂÖ²ÉÑùÖµ£¨ÒÑ¾ùºâÈ¥ÔëÉù£¬Ã¿Í¨µÀÒ»¸öµã£¬Ñ­»·±£´æ£©
+  26          idata  Uint16      ad_samp_pnum;             //²ÉÑùµãÊý(¼ÆËã¾²Ì¬»ù×¼ÖµÊ±×Ü²ÉÑùµãÊý)
+  27          idata  sAD_Sum     ad_samp_sum;              //½×¶ÎÇóºÍ
+  28          xdata  sAD_BASE    ad_chn_base;              //¸÷Í¨µÀÔËÐÐÊ±¾²Ì¬»ù×¼Öµ/ÉÏÏÂÏÞ·§Öµ£¨µ¥Î»£º²ÉÑùÖµ£©
+  29           data  Byte        ad_chn_over;              //¸÷Í¨µÀÁ¬Ðø²ÉÑùµã(¾ùºâºó)µÄ·§ÖµÅÐ¶¨£º 0 - ·¶Î§ÄÚ£» 1 - ³¬·§Ö
+             -µ
+  30          xdata  Uint16      ad_still_dn;              //¾²Ì¬À­Á¦ÖµÏÂÏÞ
+  31          xdata  Uint16      ad_still_up;              //¾²Ì¬À­Á¦ÖµÉÏÏÞ
+  32           xdata  Byte       ad_still_Dup;             //±¨¾¯·§ÖµÉÏÏÞ
+  33          idata  Uint16      ad_alarm_exts;            //ÍâÁ¦±¨¾¯±êÖ¾£¨Î´¾­mask£©£ºÎ»Öµ 0 - ÎÞ£» 1 - ³¬·§Öµ         
+             -           
+  34          
+  35          /* for system */
+  36          idata  Byte     system_status;               //ÏµÍ³×´Ì¬
+  37                                                                                                   // 0 - ³õÊ¼ÉÏµç
+  38                                                                                                   // 1 - »ù×¼Öµ²ÉÑùÇ°ÑÓÊ±
+  39                                                                                                   // 2 - »ù×¼Öµ²ÉÑù(10Ãë×óÓÒ)
+  40                                                                                                   // 3 - ÊµÊ±¼à²â
+  41          idata  Byte     gl_comm_addr;                //±¾Ä£¿é485Í¨ÐÅµØÖ·
+  42          bdata  bit      system_2or1;                 //Ë«/µ¥·ÀÇø±êÖ¾: 0 - Ë«; 1 - µ¥            
+  43          
+  44          /* ÏµÍ³¼ÆÊ± */
+  45          xdata  Byte     gl_ack_tick = 0;                 //ÉÏÎ»»ú485¿ÚÓ¦´ðÑÓÊ±¼ÆÊ± tick
+  46          xdata  Uint16   gl_delay_tick;               //Í¨ÓÃÑÓÊ±ÓÃtick
+  47           
+  48          /* variables for alarm output */
+  49          bdata  bit      ad_alarm_flag;               //ÍâÁ¦±¨¾¯±êÖ¾
+  50           data  Uint16   ad_alarm_tick;               //¸÷Í¨µÀ±¨¾¯¼ÆÊ±tick
+  51          bdata  bit      alarm1_flag;
+C51 COMPILER V9.54   VARIABLE                                                              05/13/2016 14:54:21 PAGE 2   
+
+  52           data  Uint16   alarm1_timer;                //¼ÆÊ±Æ÷£¬±¨¾¯Æ÷1ÒÑ±¨¾¯Ê±¼ä,µ¥Î»:tick 
+  53          
+  54          /* variables for beep */
+  55          xdata  Uint16   beep_during_temp;            //Ô¤ÉèµÄÒ»´Î·äÃù³ÖÐøÊ±¼ä, µ¥Î»:tick 
+  56          
+  57          /* Doorkeep(ÃÅ´Å) */
+  58          bdata  bit      gl_dk_status;                //ÃÅ´Å¿ª¹Ø×´Ì¬£¨Ã¿1s¶¯Ì¬¼ì²â£©: 1 - ±ÕºÏ; 0 - ´ò¿ª(ÐèÒª±¨¾¯) 
+             -                   
+  59          xdata  Byte     gl_dk_tick;                  //ÃÅ´Å¼ì²â¼ÆÊ±tick
+  60          
+  61          /* ´«¸ÐÆ÷²ÉÑùÆ«²î */
+  62          xdata  Uint16   sensor_sample_offset;        //´«¸ÐÆ÷²ÉÑùÆ«²î£ºÃ»ÓÐÍâÁ¦Ê±£¬´«¸ÐÆ÷²ÉÑùÖµ²»Îª0£¬´óÔ¼400×óÓÒ£
+             -¬ÐèÒª½ÃÕý¡£Ë²¼äÕÅÁ¦ = ²ÉÑùÖµ - ²ÉÑùÆ«²î
+  63                                                                                           
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    379    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =     19    ----
+   BIT SIZE         =      6    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

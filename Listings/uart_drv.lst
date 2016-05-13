@@ -1,0 +1,170 @@
+C51 COMPILER V9.54   UART_DRV                                                              05/13/2016 14:54:24 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE UART_DRV
+OBJECT MODULE PLACED IN .\Objects\uart_drv.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE driver\uart\uart_drv.c OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Listi
+                    -ngs\uart_drv.lst) OBJECT(.\Objects\uart_drv.obj)
+
+line level    source
+
+   1          #include "driver/uart/uart_drv.h"
+   2          
+   3          /* UART1 */
+   4          extern xdata  Byte     msg1_buf[MAX_RecvFrame];     // received message, used for proceding
+   5          extern bdata  bit      msg1_buf_valid;              // received valid flag
+   6          extern xdata  Byte     recv1_buf[MAX_RecvFrame];    // receiving buffer
+   7          extern idata  Byte     recv1_state;                 // receive state
+   8          extern idata  Byte     recv1_timer;                 // receive time-out, ÓÃÓÚ×Ö½Ú¼ä³¬Ê±ÅĞ¶¨
+   9          extern idata  Byte     recv1_chksum;                // computed checksum
+  10          extern idata  Byte     recv1_ctr;                   // reveiving pointer
+  11          
+  12          extern xdata  Byte     trans1_buf[MAX_TransFrame];  // uart transfer message buffer
+  13          extern idata  Byte     trans1_ctr;                  // transfer pointer
+  14          extern idata  Byte     trans1_size;                 // transfer bytes number
+  15          extern idata  Byte     trans1_chksum;               // computed check-sum of already transfered message
+  16          extern bdata  bit      trans1_occupy;               // ·¢ËÍÆ÷±»Õ¼ÓÃ±êÖ¾£¬1-±»Õ¼ÓÃ, 0-¿ÕÏĞ
+  17          
+  18          extern  data  Byte     uart1_q_index;               // ÕıÔÚ·¢ËÍÄ³¶ÓÁĞÏîµÄĞòºÅ£ºÈôÎª0xFF, ±íÊ¾Ã»ÓĞÈÎºÎÏî½øÈ
+             -ë·¢ËÍÁ÷³Ì
+  19          extern xdata  sUART_Q  uart1_q[UART_QUEUE_NUM];     // ´®¿Ú¶ÓÁĞ
+  20          
+  21          
+  22          void uart_init(void)    //9600bps@22.1184MHz
+  23          {
+  24   1              //uart1Ó²¼ş³õÊ¼»¯
+  25   1              SCON = 0x50;            //8Î»Êı¾İ,¿É±ä²¨ÌØÂÊ,½ÓÊÕÊ¹ÄÜ
+  26   1              PCON &= 0x3F;           //²¨ÌØÂÊ²»±¶ËÙ
+  27   1              AUXR &= 0xFB;           //¶ÀÁ¢²¨ÌØÂÊ·¢ÉúÆ÷Ê±ÖÓÎªFosc/12,¼´12T
+  28   1              BRT = 0xFA;                 //Éè¶¨¶ÀÁ¢²¨ÌØÂÊ·¢ÉúÆ÷ÖØ×°Öµ
+  29   1              AUXR |= 0x01;           //´®¿Ú1Ñ¡Ôñ¶ÀÁ¢²¨ÌØÂÊ·¢ÉúÆ÷Îª²¨ÌØÂÊ·¢ÉúÆ÷
+  30   1              AUXR |= 0x10;           //Æô¶¯¶ÀÁ¢²¨ÌØÂÊ·¢ÉúÆ÷
+  31   1              ES = 1;             //Ê¹ÄÜ´®¿Ú1ÖĞ¶Ï
+  32   1              PS = 1;             //ÉèÖÃÖĞ¶ÏÓÅÏÈ¼¶ÎªÓÅÏÈ¼¶1
+  33   1              IPH &= 0xEF;
+  34   1      
+  35   1              _nop_();
+  36   1              _nop_();
+  37   1              _nop_();
+  38   1              _nop_();
+  39   1      }
+  40          
+  41          //ÉÏÎ»»ú
+  42          void uart1_isr(void) interrupt SIO_VECTOR using 2
+  43          {
+  44   1              Byte c;
+  45   1      
+  46   1              if (_testbit_(TI)) { //·¢ËÍÖĞ¶Ï
+  47   2                      trans1_ctr++;   //È¡ÏÂÒ»¸ö´ı´«ËÍindex
+  48   2                      if (trans1_ctr < trans1_size) { //Î´´«ËÍÍê³É
+  49   3                              if (trans1_ctr == (trans1_size - 1)) { //ÒÑ¾­Ö¸ÏòĞ£Ñé×Ö½Ú
+  50   4                                      SBUF = trans1_chksum;    //·¢ËÍĞ£Ñé×Ö½Ú
+  51   4                              } else { //·ÇĞ£Ñé×Ö½Ú, ĞèÒª´«ËÍ²¢¼ÆËãchecksum
+  52   4                                      SBUF = trans1_buf[trans1_ctr];
+  53   4                                      if (trans1_ctr > 0) { //¼ÆËãcheck_sum
+C51 COMPILER V9.54   UART_DRV                                                              05/13/2016 14:54:24 PAGE 2   
+
+  54   5                                              trans1_chksum += trans1_buf[trans1_ctr];   //¸üĞÂchksum
+  55   5                                      }
+  56   4                              }
+  57   3                      } else { //ÒÑ¾­È«²¿´«ËÍÍê³É(º¬Ğ£Ñé×Ö½Ú)£¬¿ÉÒÔÖÃ·¢ËÍÆ÷¿ÕÏĞ
+  58   3                              //Ä¿Ç°Éè¼Æ£º¾ù²»ĞèµÈ´ıÓ¦´ğ, ¿ÉÒÔÊÍ·Å¸Ã¶ÓÁĞÏî
+  59   3                              if (uart1_q_index < UART_QUEUE_NUM)
+  60   3                                      uart1_q[uart1_q_index].flag = 0;   //¸Ã¶ÓÁĞÏî¿ÕÏĞ
+  61   3                              uart1_q_index = 0xFF;   //ÎŞ¶ÓÁĞÏîÔÚ·¢ËÍ
+  62   3                              trans1_occupy = 0;              //·¢ËÍÆ÷¿ÕÏĞ
+  63   3                      }
+  64   2                      TI = 0;   //must clear by user software
+  65   2              }
+  66   1      
+  67   1              if (_testbit_(RI)) { //½ÓÊÕÖĞ¶Ï
+  68   2                      c = SBUF;
+  69   2                      switch (recv1_state)
+  70   2                      {
+  71   3                      case FSA_INIT://ÊÇ·ñÎªÖ¡Í·
+  72   3                              if (c == FRAME_STX) { //ÎªÖ¡Í·, ¿ªÊ¼ĞÂµÄÒ»Ö¡
+  73   4                                      recv1_ctr = 0;
+  74   4                                      recv1_chksum = 0;
+  75   4                                      recv1_timer = RECV_TIMEOUT;
+  76   4                                      recv1_state = FSA_ADDR_D;
+  77   4                              }
+  78   3                              break;
+  79   3      
+  80   3                      case FSA_ADDR_D://ÎªÄ¿µÄµØÖ·, ¿ªÊ¼±£´æ²¢¼ÆËãĞ§ÑéºÍ
+  81   3                              recv1_buf[recv1_ctr++] = c;
+  82   3                              recv1_chksum += c;
+  83   3                              recv1_timer = RECV_TIMEOUT;
+  84   3                              recv1_state = FSA_ADDR_S;
+  85   3                              break;
+  86   3      
+  87   3                      case FSA_ADDR_S://ÎªÔ´µØÖ·
+  88   3                              recv1_buf[recv1_ctr++] = c;
+  89   3                              recv1_chksum += c;
+  90   3                              recv1_timer = RECV_TIMEOUT;
+  91   3                              recv1_state = FSA_LENGTH;
+  92   3                              break;
+  93   3      
+  94   3                      case FSA_LENGTH://Îª³¤¶È×Ö½Ú
+  95   3                              if ((c > 0) && (c < (MAX_RecvFrame - 3))) { //ÓĞĞ§´®
+  96   4                                      recv1_buf[recv1_ctr++] = c;    //µÚÈı¸ö×Ö½Ú±£´æ³¤¶È
+  97   4                                      recv1_chksum += c;
+  98   4                                      recv1_timer = RECV_TIMEOUT;
+  99   4                                      recv1_state = FSA_DATA;
+ 100   4                              } else {        //·ÇÓĞĞ§´®
+ 101   4                                      recv1_state = FSA_INIT;
+ 102   4                              }
+ 103   3                              break;
+ 104   3      
+ 105   3                      case FSA_DATA://¶ÁÈ¡ÃüÁî´®
+ 106   3                              recv1_buf[recv1_ctr] = c;
+ 107   3                              recv1_chksum += c;   //¸üĞÂĞ£ÑéºÍ
+ 108   3                              if (recv1_ctr == (recv1_buf[2] + 2)){ //ÒÑ¾­ÊÕµ½Ö¸¶¨³¤¶ÈµÄÃüÁîÊı¾İ
+ 109   4                                      recv1_state = FSA_CHKSUM;
+ 110   4                              }else{//»¹Î´½áÊø
+ 111   4                                      recv1_ctr ++;
+ 112   4                              }
+ 113   3                              recv1_timer = RECV_TIMEOUT;
+ 114   3                              break;
+ 115   3      
+C51 COMPILER V9.54   UART_DRV                                                              05/13/2016 14:54:24 PAGE 3   
+
+ 116   3                      case FSA_CHKSUM://¼ì²éĞ£Ñé×Ö½Ú
+ 117   3                              if ((recv1_chksum == c) && (msg1_buf_valid == FALSE)){
+ 118   4                                      //ÒÑ¾­ÊÕµ½ÍêÕûÒ»Ö¡²¢ÇÒÒÔÇ°ÊÕµ½µÄÏûÏ¢ÒÑ¾­±»´¦ÀíÁË
+ 119   4                                      memcpy(msg1_buf, recv1_buf, recv1_buf[2] + 3);
+ 120   4                                      msg1_buf_valid = TRUE;
+ 121   4                              }
+ 122   3                      default:
+ 123   3                              //¸´Î»
+ 124   3                              recv1_state = FSA_INIT;
+ 125   3                              break;
+ 126   3                      }
+ 127   2                      RI = 0;     //must clear by user software
+ 128   2              }
+ 129   1      }
+ 130          
+ 131          void uart1_start_trans(void)
+ 132          { 
+ 133   1              trans1_occupy = 1;
+ 134   1              trans1_chksum = 0;
+ 135   1              trans1_ctr = 0;
+ 136   1              SBUF = trans1_buf[trans1_ctr];
+ 137   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    428    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

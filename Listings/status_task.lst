@@ -1,0 +1,69 @@
+C51 COMPILER V9.54   STATUS_TASK                                                           05/13/2016 14:54:22 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE STATUS_TASK
+OBJECT MODULE PLACED IN .\Objects\status_task.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE task\status\status_task.c OMF2 OPTIMIZE(8,SPEED) BROWSE DEBUG PRINT(.\Li
+                    -stings\status_task.lst) OBJECT(.\Objects\status_task.obj)
+
+line level    source
+
+   1          #include "task/status/status_task.h"
+   2          
+   3          #define DLY_BF_GetBase  (5000/SCHEDULER_TICK)   //基准值采样前延时，单位：tick
+   4          
+   5          /* 系统计时 */
+   6          extern xdata  Uint16  gl_delay_tick;   //通用延时用tick
+   7          
+   8          /* for system */
+   9          extern idata  Byte    system_status;   //系统状态
+  10          
+  11          void status_task_init(void)
+  12          {
+  13   1              system_status = SYS_PowerON;       //初始上电
+  14   1      }
+  15          
+  16          void status_task(void)
+  17          {
+  18   1              Uint16 temp16;
+  19   1      
+  20   1              switch (system_status)
+  21   1              {
+  22   2              case  SYS_PowerON://初始上电
+  23   2                      Disable_interrupt();
+  24   2                      gl_delay_tick = 0;
+  25   2                      Enable_interrupt();
+  26   2                      system_status = SYS_B5S;
+  27   2                      break;
+  28   2      
+  29   2              case  SYS_B5S:    //基准值采样前延时(约5秒)
+  30   2                      Disable_interrupt();
+  31   2                      temp16 = gl_delay_tick;
+  32   2                      Enable_interrupt();
+  33   2                      if (temp16 > DLY_BF_GetBase)
+  34   2                              system_status = SYS_SAMP_BASE;
+  35   2                      break;
+  36   2              default:
+  37   2                      break;
+  38   2              }
+  39   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     54    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.54   STATUS_TASK                                                           05/13/2016 14:54:22 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
