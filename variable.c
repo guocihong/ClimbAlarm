@@ -19,7 +19,7 @@ data  Byte      uart1_q_index;               // 正在发送某队列项的序号：若为0xFF
 xdata sUART_Q   uart1_q[UART_QUEUE_NUM];	 // 串口队列				 						  								   
 
 /* AD sample */
- data  Byte        ad_sensor_mask;           //传感器掩码
+bdata  bit         ad_sensor_mask;           //传感器掩码
  data  sAD_Sample  ad_sample;                //保存当前采样值
 idata  sAD_Sum     ad_samp_equ;              //均衡去嘈声求和
 xdata  Union16     ad_chn_sample;            //最新一轮采样值（已均衡去噪声，每通道一个点，循环保存）

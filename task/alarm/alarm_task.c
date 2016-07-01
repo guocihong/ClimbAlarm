@@ -1,5 +1,8 @@
 #include "task/alarm/alarm_task.h"
 
+/* AD */
+extern bdata  bit     ad_sensor_mask;   //传感器掩码
+
 /* Doorkeep */
 extern bdata  bit     gl_dk_status;     //门磁开关状态: 1 - 闭合; 0 - 打开(需要报警)
 
@@ -20,8 +23,8 @@ void alarm_task(void)
 {
 	Uint16 temp16;
 	
-	//报警口1（左侧）
-	if ((!gl_dk_status || ad_alarm_flag) && (system_status == SYS_CHECK)) {	
+	//报警
+	if ((!gl_dk_status || ad_alarm_flag) && (ad_sensor_mask == 1) && (system_status == SYS_CHECK)) {	
 		//门磁打开或张力异常: 新报警或继续报警
 		Disable_interrupt();
 		alarm1_timer = 0;     //清已报警时间(至少报警3秒)

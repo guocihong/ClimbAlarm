@@ -1,4 +1,4 @@
-C51 COMPILER V9.54   ALARM_TASK                                                            05/13/2016 14:54:22 PAGE 1   
+C51 COMPILER V9.54   ALARM_TASK                                                            07/01/2016 17:14:38 PAGE 1   
 
 
 C51 COMPILER V9.54, COMPILATION OF MODULE ALARM_TASK
@@ -10,60 +10,63 @@ line level    source
 
    1          #include "task/alarm/alarm_task.h"
    2          
-   3          /* Doorkeep */
-   4          extern bdata  bit     gl_dk_status;     //门磁开关状态: 1 - 闭合; 0 - 打开(需要报警)
+   3          /* AD */
+   4          extern bdata  bit     ad_sensor_mask;   //传感器掩码
    5          
-   6          /* for system */
-   7          extern idata  Byte    system_status;    //系统状态
+   6          /* Doorkeep */
+   7          extern bdata  bit     gl_dk_status;     //门磁开关状态: 1 - 闭合; 0 - 打开(需要报警)
    8          
-   9          /* variables for alarm output */
-  10          extern bdata  bit     ad_alarm_flag;    //外力报警标志
-  11          extern bdata  bit     alarm1_flag;
-  12          extern data   Uint16  alarm1_timer;     // 计时器，报警器1已报警时间,单位tick
-  13          
-  14          void alarm_task_init(void)
-  15          {
-  16   1              alarm1_flag = 0;
-  17   1      }
-  18          
-  19          void alarm_task(void)
-  20          {
-  21   1              Uint16 temp16;
-  22   1              
-  23   1              //报警口1（左侧）
-  24   1              if ((!gl_dk_status || ad_alarm_flag) && (system_status == SYS_CHECK)) { 
-  25   2                      //门磁打开或张力异常: 新报警或继续报警
-  26   2                      Disable_interrupt();
-  27   2                      alarm1_timer = 0;     //清已报警时间(至少报警3秒)
-  28   2                      Enable_interrupt();
-  29   2                      if (alarm1_flag == 0) { //新报警
-  30   3                              bRelay_A1 = 0;     //报警
-  31   3                              alarm1_flag = 1;   //报警器1报警
-  32   3                      }
-  33   2              }
-  34   1      
-  35   1              //检查报警时间是否已到
-  36   1              if (alarm1_flag) { //报警口1正在报警
-  37   2                      Disable_interrupt();
-  38   2                      temp16 = alarm1_timer;
-  39   2                      Enable_interrupt();
-  40   2                      if (temp16 > ALARM_TEMPO) { 
-  41   3                              //报警口1已经到最大报警时间, 停止报警
-  42   3                              alarm1_flag = 0;
-  43   3                              bRelay_A1 = 1;
-  44   3                      }
-  45   2              }
-  46   1      }
+   9          /* for system */
+  10          extern idata  Byte    system_status;    //系统状态
+  11          
+  12          /* variables for alarm output */
+  13          extern bdata  bit     ad_alarm_flag;    //外力报警标志
+  14          extern bdata  bit     alarm1_flag;
+  15          extern data   Uint16  alarm1_timer;     // 计时器，报警器1已报警时间,单位tick
+  16          
+  17          void alarm_task_init(void)
+  18          {
+  19   1              alarm1_flag = 0;
+  20   1      }
+  21          
+  22          void alarm_task(void)
+  23          {
+  24   1              Uint16 temp16;
+  25   1              
+  26   1              //报警
+  27   1              if ((!gl_dk_status || ad_alarm_flag) && (ad_sensor_mask == 1) && (system_status == SYS_CHECK)) {        
+  28   2                      //门磁打开或张力异常: 新报警或继续报警
+  29   2                      Disable_interrupt();
+  30   2                      alarm1_timer = 0;     //清已报警时间(至少报警3秒)
+  31   2                      Enable_interrupt();
+  32   2                      if (alarm1_flag == 0) { //新报警
+  33   3                              bRelay_A1 = 0;     //报警
+  34   3                              alarm1_flag = 1;   //报警器1报警
+  35   3                      }
+  36   2              }
+  37   1      
+  38   1              //检查报警时间是否已到
+  39   1              if (alarm1_flag) { //报警口1正在报警
+  40   2                      Disable_interrupt();
+  41   2                      temp16 = alarm1_timer;
+  42   2                      Enable_interrupt();
+  43   2                      if (temp16 > ALARM_TEMPO) { 
+  44   3                              //报警口1已经到最大报警时间, 停止报警
+  45   3                              alarm1_flag = 0;
+  46   3                              bRelay_A1 = 1;
+  47   3                      }
+  48   2              }
+  49   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =     54    ----
+   CODE SIZE        =     57    ----
    CONSTANT SIZE    =   ----    ----
+C51 COMPILER V9.54   ALARM_TASK                                                            07/01/2016 17:14:38 PAGE 2   
+
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
-C51 COMPILER V9.54   ALARM_TASK                                                            05/13/2016 14:54:22 PAGE 2   
-
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
    EDATA SIZE       =   ----    ----

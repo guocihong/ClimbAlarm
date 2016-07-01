@@ -3,7 +3,6 @@
 /* for AD */
 #define AD_EQU_PNUM            4                     //每道钢丝采样4次求平均值
 
-extern  data  Byte        ad_sensor_mask;    //传感器掩码
 extern  data  sAD_Sample  ad_sample;         //保存当前采样值
 extern idata  sAD_Sum     ad_samp_equ;       //均衡去嘈声求和
 extern xdata  Union16     ad_chn_sample;     //最新一轮采样值（已均衡去噪声，每通道一个点，循环保存）
@@ -96,7 +95,7 @@ void adc_task(void)
 
 					//下限 = 基准 * （1 / 3）
 					val_temp = ad_chn_base.base;
-					ad_chn_base.base_down = val_temp / 3;
+                    ad_chn_base.base_down = val_temp - ad_still_Dup;
 
 					//上限
 					if ((1023 - ad_chn_base.base) > ad_still_Dup) {
@@ -118,7 +117,7 @@ void adc_task(void)
 			case SYS_CHECK: //实时检测
 				//2. 判断是否外力报警
 				ad_chn_over = ad_chn_over << 1;   //Bit0填0，因此缺省在允许范围内
-				if (val <= ad_chn_base.base_up) {
+				if ((val >= ad_chn_base.base_down) && (val <= ad_chn_base.base_up)) {
 					//在张力上/下限允许范围内
 					//a. 清标志(缺省)
 					//b. 计入跟踪基准值求和中
@@ -130,24 +129,28 @@ void adc_task(void)
 						//b.0 计算这2点均值
 						val_temp = ad_samp_sum.sum >> 1;   //除于2, 得到这2点的均值
 						//b.1 更新基准值
-						if (ad_chn_base.base > (val_temp + 1)) {
-							//至少小2, 在缓慢松弛
-							//ZZX: 立即跟踪, 跟踪差值的 1/2
-							val_temp = (ad_chn_base.base - val_temp) >> 1;
-							if (ad_chn_base.base >= val_temp) {
-								ad_chn_base.base -= val_temp;
-								//同步更新上下限
-								val_temp = ad_chn_base.base;
-								ad_chn_base.base_down = val_temp / 3;
-								if ((1023 - ad_chn_base.base) > ad_still_Dup) {
-									ad_chn_base.base_up = ad_chn_base.base + ad_still_Dup;
-								} else {
-									ad_chn_base.base_up = 1023;
-								}
+						if (ad_chn_base.base > (val_temp + 1)) {                            
+                            // 至少小于2,缓慢松弛
+							md_point++;
+							if (md_point >= DEF_ModiBASE_PT) {
+                                // 已满缓慢松弛时的连续计量点数, 进行一次跟踪
+								// 1. 跟踪基准值
+                               if (ad_chn_base.base > 0) {
+                                    //可以递减1
+                                    ad_chn_base.base--;
+                                    // 同步更新上下限
+                                    val_temp = ad_chn_base.base;
+                                    if ((val_temp - ad_still_Dup) > 0) {
+                                        ad_chn_base.base_down = val_temp - ad_still_Dup;
+                                    }
+                                    
+                                    if (ad_chn_base.base_up > 0) {
+                                        ad_chn_base.base_up--;
+                                    }
+                                }
+								// 2. 清缓慢松弛跟踪变量
+								md_point = 0;
 							}
-
-							//清缓慢张紧跟踪变量
-							md_point = 0;
 						} else if (val_temp > (ad_chn_base.base + 1)) {
 							// 至少大2, 缓慢张紧
 							md_point++;
@@ -159,7 +162,7 @@ void adc_task(void)
 									ad_chn_base.base++;
 									// 同步更新上下限
 									val_temp = ad_chn_base.base;
-									ad_chn_base.base_down = val_temp / 3;
+                                    ad_chn_base.base_down = val_temp - ad_still_Dup;
 									if (ad_chn_base.base_up < 1023) {
 										ad_chn_base.base_up++;
 									}
@@ -189,7 +192,7 @@ void adc_task(void)
 					//立即更新机制
 					ad_chn_base.base = val;
 					val_temp = ad_chn_base.base;
-					ad_chn_base.base_down = val_temp / 3;
+                    ad_chn_base.base_down = val_temp - ad_still_Dup;
 					if ((1023 - ad_chn_base.base) > ad_still_Dup) {
 						ad_chn_base.base_up = ad_chn_base.base + ad_still_Dup;
 					} else {
@@ -220,7 +223,7 @@ void adc_task(void)
 				}
 
 				//4 更新报警标志
-				temp16 = (ad_alarm_exts & 0x0001) & ad_sensor_mask;
+				temp16 = ad_alarm_exts & 0x0001;
 				if (temp16 == 0) {
 					ad_alarm_flag = 0;   //无报警
 				} else {

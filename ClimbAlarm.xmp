@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252" ?>
 <TKStudioProject Name="ClimbAlarm" BuildTool="0" ToolVer="default" Version="3.00" Author="YinHandong[Òüº®¶¬]" ProjectGUID="{6862B66F-7493-4870-B558-2245D58AD6A7}">
     <Configurations>
-        <Configuration Name="ClimbAlarm" CodeMode="2" MemMode="0" RTOS="0" T51FL="0" SIMCLK="45.000000" OCM51="" OCR51="" CodeBank="0,2,0x0,0xffff," OutputDirectory=".\ClimbAlarm\" OutputName="ClimbAlarm" GENAPP="1" GENLIB="0" ListingDirectory=".\ClimbAlarm\" OPTLT="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" OPTDBG="1,-1,1,1,1,0,()" BeforeCmp="0??0??" BeforeBuild="0??0??" AfterBuild="0??0??" DEVICE="STC12C5A32S2" VENDOR="STC" FAMINY="0">
+        <Configuration Name="ClimbAlarm" CodeMode="2" MemMode="0" RTOS="0" T51FL="9" SIMCLK="22.118400" OCM51="{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }" OCR51="{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }" CodeBank="0,2,0x0,0xffff," OutputDirectory=".\ClimbAlarm\" OutputName="ClimbAlarm" GENAPP="1" GENLIB="0" ListingDirectory=".\ClimbAlarm\" OPTLT="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" OPTDBG="1,-1,1,1,1,0,()" BeforeCmp="0??0??" BeforeBuild="0??0??" AfterBuild="0??0??" DEVICE="STC12C5A32S2" VENDOR="STC" FAMINY="0" asModify="0" cModify="0">
             <Tool Name="C51Tool" C51FL="4853008" C51VA="0" C51DEF="" C51UDF="" C51MSC="" INCC5="" />
             <Tool Name="A51Tool" A51FL="68" A51SET="" A51RST="" A51MSC="" INCA5="" />
-            <Tool Name="Lx51Tool" LX51FL="4" LX51COB="" LX51XDB="" LX51PDB="" LX51BIB="" LX51DAB="" LX51IDB="" LX51PRC="" LX51STK="" LX51COS="" LX51XDS="" LX51BIS="" LX51DAS="" LX51IDS="" LX51OVL="" LX51MSC="" LX51DWN="" />
+            <Tool Name="Lx51Tool" LX51FL="4" LX51COB="0x0000-0x7FFF" LX51XDB="0x0000-0x03FF" LX51PDB="" LX51BIB="" LX51DAB="" LX51IDB="" LX51PRC="" LX51STK="" LX51COS="" LX51XDS="" LX51BIS="" LX51DAS="" LX51IDS="" LX51OVL="" LX51MSC="" LX51DWN="" />
             <DeviceProperties Item0="CPU=IRAM(0-0xFF) XRAM(0-0x3FF) IROM(0-0x7FFF) CLOCK(45000000) CLKSPERSTATE(1)" Item1='MON=S8051.DLL TP51.DLL(&quot;-p51&quot;)' Item2='SIM=S8051.DLL DP51.DLL(&quot;-p51&quot;)' Item3='SFILE=&quot;LIB\STARTUP.A51&quot; (&quot;Standard 8051 Startup Code&quot;)' Item4="REGFILE=REG51.H" />
             <DeviceDescription Description="8051-based microcontroller with 1T(1-clock) High-Speed Core,&#x0D;&#x0A;Dual DPTR, 36-44 I/O Lines, 2 Timers/Counters, 2 PCA Timers,&#x0D;&#x0A;Alternative build-in oscillator,&#x0D;&#x0A;Independent Baud Rate Generator, Programmable Clock-Out,&#x0D;&#x0A;32K bytes flash ROM, 1280 bytes data RAM,&#x0D;&#x0A;On-chip EEPROM, 2 UARTs, WDT, ISP/IAP, A/D, CCP/PWM" />
         </Configuration>
@@ -12,133 +12,22 @@
     <Files>
         <Filter Name="system">
             <File RelativePath=".\STARTUP.A51" />
-            <File RelativePath=".\main.c">
-                <Header RelativePath="system_init.h" />
-                <Header RelativePath="task/adc/adc_task.h" />
-                <Header RelativePath="task/uart/uart_task.h" />
-                <Header RelativePath="driver/uart/uart_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\string.h" />
-                <Header RelativePath="driver/flash/flash_drv.h" />
-                <Header RelativePath="driver/adc/adc_drv.h" />
-                <Header RelativePath="task/doorkeep/doorkeep_task.h" />
-                <Header RelativePath="task/status/status_task.h" />
-                <Header RelativePath="task/alarm/alarm_task.h" />
-                <Header RelativePath="driver/timer/timer_drv.h" />
-                <Header RelativePath="driver/wdt/wdt_drv.h" />
-            </File>
-            <File RelativePath=".\system_init.c">
-                <Header RelativePath="system_init.h" />
-                <Header RelativePath="task/adc/adc_task.h" />
-                <Header RelativePath="task/uart/uart_task.h" />
-                <Header RelativePath="driver/uart/uart_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\string.h" />
-                <Header RelativePath="driver/flash/flash_drv.h" />
-                <Header RelativePath="driver/adc/adc_drv.h" />
-                <Header RelativePath="task/doorkeep/doorkeep_task.h" />
-                <Header RelativePath="task/status/status_task.h" />
-                <Header RelativePath="task/alarm/alarm_task.h" />
-                <Header RelativePath="driver/timer/timer_drv.h" />
-                <Header RelativePath="driver/wdt/wdt_drv.h" />
-            </File>
-            <File RelativePath=".\variable.c">
-                <Header RelativePath="config.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-            </File>
+            <File RelativePath=".\main.c" />
+            <File RelativePath=".\system_init.c" />
+            <File RelativePath=".\variable.c" />
         </Filter>
         <Filter Name="task">
-            <File RelativePath=".\task\adc\adc_task.c">
-                <Header RelativePath="task/adc/adc_task.h" />
-                <Header RelativePath="task/uart/uart_task.h" />
-                <Header RelativePath="driver/uart/uart_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\string.h" />
-                <Header RelativePath="driver/flash/flash_drv.h" />
-                <Header RelativePath="driver/adc/adc_drv.h" />
-            </File>
-            <File RelativePath=".\task\alarm\alarm_task.c">
-                <Header RelativePath="task/alarm/alarm_task.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-            </File>
-            <File RelativePath=".\task\doorkeep\doorkeep_task.c">
-                <Header RelativePath="task/doorkeep/doorkeep_task.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-            </File>
-            <File RelativePath=".\task\status\status_task.c">
-                <Header RelativePath="task/status/status_task.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-            </File>
-            <File RelativePath=".\task\uart\uart_task.c">
-                <Header RelativePath="task/uart/uart_task.h" />
-                <Header RelativePath="driver/uart/uart_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\string.h" />
-                <Header RelativePath="driver/flash/flash_drv.h" />
-            </File>
+            <File RelativePath=".\task\adc\adc_task.c" />
+            <File RelativePath=".\task\alarm\alarm_task.c" />
+            <File RelativePath=".\task\doorkeep\doorkeep_task.c" />
+            <File RelativePath=".\task\status\status_task.c" />
+            <File RelativePath=".\task\uart\uart_task.c" />
         </Filter>
         <Filter Name="driver">
-            <File RelativePath=".\driver\flash\flash_drv.c">
-                <Header RelativePath="driver/flash/flash_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-            </File>
-            <File RelativePath=".\driver\adc\adc_drv.c">
-                <Header RelativePath="driver/adc/adc_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-            </File>
-            <File RelativePath=".\driver\timer\timer_drv.c">
-                <Header RelativePath="driver/timer/timer_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-                <Header RelativePath="driver/adc/adc_drv.h" />
-            </File>
-            <File RelativePath=".\driver\uart\uart_drv.c">
-                <Header RelativePath="driver/uart/uart_drv.h" />
-                <Header RelativePath="STC12C5A60S2.h" />
-                <Header RelativePath="compiler.h" />
-                <Header RelativePath="config.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\intrins.h" />
-                <Header RelativePath="stress.h" />
-                <Header RelativePath="F:\Keil_v5\c51\INC\string.h" />
-            </File>
+            <File RelativePath=".\driver\flash\flash_drv.c" />
+            <File RelativePath=".\driver\adc\adc_drv.c" />
+            <File RelativePath=".\driver\timer\timer_drv.c" />
+            <File RelativePath=".\driver\uart\uart_drv.c" />
         </Filter>
     </Files>
 </TKStudioProject>

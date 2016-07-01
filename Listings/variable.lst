@@ -1,4 +1,4 @@
-C51 COMPILER V9.54   VARIABLE                                                              05/13/2016 14:54:21 PAGE 1   
+C51 COMPILER V9.54   VARIABLE                                                              07/01/2016 17:14:37 PAGE 1   
 
 
 C51 COMPILER V9.54, COMPILATION OF MODULE VARIABLE
@@ -30,7 +30,7 @@ line level    source
   19          xdata sUART_Q   uart1_q[UART_QUEUE_NUM];         // 串口队列                                                                                                                                               
   20          
   21          /* AD sample */
-  22           data  Byte        ad_sensor_mask;           //传感器掩码
+  22          bdata  bit         ad_sensor_mask;           //传感器掩码
   23           data  sAD_Sample  ad_sample;                //保存当前采样值
   24          idata  sAD_Sum     ad_samp_equ;              //均衡去嘈声求和
   25          xdata  Union16     ad_chn_sample;            //最新一轮采样值（已均衡去噪声，每通道一个点，循环保存）
@@ -62,7 +62,7 @@ line level    source
   49          bdata  bit      ad_alarm_flag;               //外力报警标志
   50           data  Uint16   ad_alarm_tick;               //各通道报警计时tick
   51          bdata  bit      alarm1_flag;
-C51 COMPILER V9.54   VARIABLE                                                              05/13/2016 14:54:21 PAGE 2   
+C51 COMPILER V9.54   VARIABLE                                                              07/01/2016 17:14:37 PAGE 2   
 
   52           data  Uint16   alarm1_timer;                //计时器，报警器1已报警时间,单位:tick 
   53          
@@ -85,9 +85,9 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =    379    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     11    ----
+   DATA SIZE        =     10    ----
    IDATA SIZE       =     19    ----
-   BIT SIZE         =      6    ----
+   BIT SIZE         =      7    ----
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----
    XDATA CONST SIZE =   ----    ----

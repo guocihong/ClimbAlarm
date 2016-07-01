@@ -61,11 +61,11 @@ void timer0_isr(void) interrupt TF0_VECTOR using 1
 		ad_sample.valid = TRUE;
 		
 		//采样值减去采样偏差
-        if (ad_sample.val > sensor_sample_offset) {
-            ad_sample.val -= sensor_sample_offset;
-        } else {
-            ad_sample.val = 0;
-        }
+/*  		if (ad_sample.val > sensor_sample_offset) {
+			ad_sample.val -= sensor_sample_offset;
+		} else {
+			ad_sample.val = 0;
+		}  */
 		
 		ADC_CONTR |= ADC_START;                   // 启动转换
 	}

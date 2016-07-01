@@ -1,9 +1,8 @@
 #include "system_init.h"
 
 /*
-1、攀爬报警主程序
+1、攀爬报警主程序-->用在受力杆和轴承杆上面
 2、出厂需要设置报警阀值
-3、出厂需要设置采样值清零
 */
 
 void main(void)
@@ -13,7 +12,7 @@ void main(void)
 
     //打开总中断
     Enable_interrupt();
-    
+	
     //使能看门狗
     Wdt_enable();// 2.276s 溢出周期      
     

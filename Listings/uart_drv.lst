@@ -1,4 +1,4 @@
-C51 COMPILER V9.54   UART_DRV                                                              05/13/2016 14:54:24 PAGE 1   
+C51 COMPILER V9.54   UART_DRV                                                              07/01/2016 17:14:40 PAGE 1   
 
 
 C51 COMPILER V9.54, COMPILATION OF MODULE UART_DRV
@@ -62,7 +62,7 @@ line level    source
   51   4                              } else { //非校验字节, 需要传送并计算checksum
   52   4                                      SBUF = trans1_buf[trans1_ctr];
   53   4                                      if (trans1_ctr > 0) { //计算check_sum
-C51 COMPILER V9.54   UART_DRV                                                              05/13/2016 14:54:24 PAGE 2   
+C51 COMPILER V9.54   UART_DRV                                                              07/01/2016 17:14:40 PAGE 2   
 
   54   5                                              trans1_chksum += trans1_buf[trans1_ctr];   //更新chksum
   55   5                                      }
@@ -126,7 +126,7 @@ line level    source
  113   3                              recv1_timer = RECV_TIMEOUT;
  114   3                              break;
  115   3      
-C51 COMPILER V9.54   UART_DRV                                                              05/13/2016 14:54:24 PAGE 3   
+C51 COMPILER V9.54   UART_DRV                                                              07/01/2016 17:14:40 PAGE 3   
 
  116   3                      case FSA_CHKSUM://检查校验字节
  117   3                              if ((recv1_chksum == c) && (msg1_buf_valid == FALSE)){
