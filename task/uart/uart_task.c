@@ -81,7 +81,7 @@ void uart_task(void)
 	//1.接收并处理 UART1：来自上位机的命令包
 	if (msg1_buf_valid) {
 		//a.1 是否需要执行本命令
-		if (msg1_buf[0] == CMD_ADDR_BC) {
+		if ((msg1_buf[0] == CMD_ADDR_BC) || (msg1_buf[0] == gl_comm_addr)) {
 			//广播地址或指定本设备, 需要执行
 			switch (msg1_buf[3])
 			{
